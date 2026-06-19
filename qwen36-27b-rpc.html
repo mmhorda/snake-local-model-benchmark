@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>NEON SNAKE</title>
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #0a0a0f;
+  --panel-bg: rgba(10, 10, 20, 0.75);
+  --panel-border: rgba(0, 255, 255, 0.15);
+  --cyan: #00f0ff;
+  --magenta: #ff00aa;
+  --green: #00ff88;
+  --yellow: #ffe600;
+  --red: #ff3344;
+  --text: #e0e8f0;
+  --text-dim: #6a7a8a;
+  --glow-cyan: 0 0 20px rgba(0, 240, 255, 0.5);
+  --glow-magenta: 0 0 20px rgba(255, 0, 170, 0.5);
+  --glow-green: 0 0 15px rgba(0, 255, 136, 0.4);
+  --radius: 12px;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  background: var(--bg); color: var(--text);
+  font-family: var(--font);
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ===== LAYOUT ===== */
+#app {
+  position: relative; width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at center, #0d0d1a 0%, var(--bg) 70%);
+}
+canvas#gameCanvas {
+  display: block; border-radius: 4px;
+  box-shadow: var(--glow-cyan), inset 0 0 30px rgba(0,240,255,0.03);
+}
+
+/* ===== OVERLAY PANELS ===== */
+.overlay {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(5, 5, 15, 0.85);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  z-index: 10; transition: opacity 0.3s ease;
+}
+.overlay.hidden { opacity: 0; pointer-events: none; }
+.panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  padding: 32px 36px;
+  max-width: 420px; width: 90%;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6), var(--glow-cyan);
+  text-align: center;
+}
+.panel h1 {
+  font-size: 2.4rem; font-weight: 800;
+  background: linear-gradient(135deg, var(--cyan), var(--magenta));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: titlePulse 3s ease-in-out infinite;
+  margin-bottom: 4px;
+}
+.panel h2 {
+  font-size: 1.6rem; font-weight: 700; color: var(--red);
+  margin-bottom: 12px;
+}
+.panel .subtitle {
+  font-size: 0.85rem; color: var(--text-dim); margin-bottom: 20px;
+}
+@keyframes titlePulse {
+  0%, 100% { filter: brightness(1) drop-shadow(0 0 8px rgba(0,240,255,0.3)); }
+  50% { filter: brightness(1.2) drop-shadow(0 0 16px rgba(255,0,170,0.4)); }
+}
+
+/* ===== FORM ELEMENTS ===== */
+label { font-size: 0.9rem; color: var(--text-dim); display: block; margin-bottom: 6px; }
+select, button {
+  font-family: var(--font); border-radius: 8px;
+  outline: none; transition: all 0.2s ease;
+}
+select {
+  width: 100%; padding: 10px 14px; font-size: 1rem;
+  background: rgba(0,0,0,0.4); color: var(--text);
+  border: 1px solid var(--panel-border); margin-bottom: 16px;
+  cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300f0ff' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center;
+}
+select:focus { border-color: var(--cyan); box-shadow: var(--glow-cyan); }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 12px 28px; font-size: 1rem; font-weight: 600;
+  border: 1px solid var(--panel-border); cursor: pointer;
+  background: linear-gradient(135deg, rgba(0,240,255,0.1), rgba(255,0,170,0.1));
+  color: var(--cyan); min-width: 140px;
+}
+.btn:hover { background: linear-gradient(135deg, rgba(0,240,255,0.2), rgba(255,0,170,0.2)); box-shadow: var(--glow-cyan); }
+.btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.btn:active { transform: scale(0.97); }
+.btn-sm { padding: 8px 18px; font-size: 0.85rem; min-width: auto; }
+.btn-row { display: flex; gap: 10px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+
+/* ===== TOGGLE ===== */
+.toggle-row {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  margin-bottom: 16px;
+}
+.toggle {
+  position: relative; width: 48px; height: 26px; cursor: pointer;
+}
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle .slider {
+  position: absolute; inset: 0; border-radius: 13px;
+  background: rgba(255,255,255,0.1); transition: 0.3s;
+}
+.toggle .slider::before {
+  content: ''; position: absolute; width: 20px; height: 20px;
+  left: 3px; top: 3px; border-radius: 50%;
+  background: var(--text-dim); transition: 0.3s;
+}
+.toggle input:checked + .slider { background: rgba(0,240,255,0.3); }
+.toggle input:checked + .slider::before { transform: translateX(22px); background: var(--cyan); }
+.toggle input:focus-visible + .slider { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+/* ===== SCORE DISPLAY ===== */
+.score-line {
+  font-size: 1.1rem; margin: 8px 0; color: var(--text);
+}
+.score-line span { color: var(--cyan); font-weight: 700; }
+.instructions {
+  font-size: 0.8rem; color: var(--text-dim); line-height: 1.6;
+  margin: 12px 0; text-align: left;
+}
+.instructions kbd {
+  display: inline-block; padding: 1px 6px; border-radius: 4px;
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+  font-family: var(--font); font-size: 0.75rem; color: var(--text);
+}
+
+/* ===== HUD ===== */
+#hud {
+  position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 24px; align-items: center;
+  background: var(--panel-bg); border: 1px solid var(--panel-border);
+  border-radius: 8px; padding: 6px 20px; z-index: 5;
+  font-size: 0.9rem;
+}
+#hud.hidden { display: none; }
+#hud .hud-label { color: var(--text-dim); }
+#hud .hud-val { color: var(--cyan); font-weight: 700; }
+
+/* ===== D-PAD (mobile) ===== */
+#dpad {
+  position: absolute; bottom: 20px; right: 20px; z-index: 5;
+  width: 150px; height: 150px; display: none;
+}
+.dpad-btn {
+  position: absolute; width: 48px; height: 48px;
+  background: rgba(0,240,255,0.08); border: 1px solid rgba(0,240,255,0.25);
+  border-radius: 10px; color: var(--cyan); font-size: 1.4rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; user-select: none; -webkit-user-select: none;
+  transition: background 0.15s;
+}
+.dpad-btn:active { background: rgba(0,240,255,0.25); }
+#dpad-up { top: 0; left: 50%; transform: translateX(-50%); }
+#dpad-down { bottom: 0; left: 50%; transform: translateX(-50%); }
+#dpad-left { left: 0; top: 50%; transform: translateY(-50%); }
+#dpad-right { right: 0; top: 50%; transform: translateY(-50%); }
+
+/* ===== PAUSE INDICATOR ===== */
+#pauseIndicator {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  font-size: 2rem; font-weight: 800; color: var(--cyan);
+  text-shadow: var(--glow-cyan); z-index: 6;
+  opacity: 0; transition: opacity 0.2s; pointer-events: none;
+}
+#pauseIndicator.visible { opacity: 1; }
+
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .panel { padding: 20px 18px; }
+  .panel h1 { font-size: 1.8rem; }
+  .panel h2 { font-size: 1.3rem; }
+  #dpad { display: block; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div><span class="hud-label">Score </span><span class="hud-val" id="hudScore">0</span></div>
+    <div><span class="hud-label">Best </span><span class="hud-val" id="hudBest">0</span></div>
+    <button class="btn btn-sm" id="hudMute" aria-label="Toggle mute">&#128266;</button>
+    <button class="btn btn-sm" id="hudPause" aria-label="Pause">&#9208;</button>
+  </div>
+
+  <!-- Pause Indicator -->
+  <div id="pauseIndicator">PAUSED</div>
+
+  <!-- D-PAD -->
+  <div id="dpad" aria-label="Directional controls">
+    <div class="dpad-btn" id="dpad-up" role="button" aria-label="Up">&#9650;</div>
+    <div class="dpad-btn" id="dpad-down" role="button" aria-label="Down">&#9660;</div>
+    <div class="dpad-btn" id="dpad-left" role="button" aria-label="Left">&#9664;</div>
+    <div class="dpad-btn" id="dpad-right" role="button" aria-label="Right">&#9654;</div>
+  </div>
+
+  <!-- Game Canvas -->
+  <canvas id="gameCanvas" aria-label="Snake game canvas" role="img"></canvas>
+
+  <!-- Start Menu -->
+  <div class="overlay" id="startMenu">
+    <div class="panel" role="dialog" aria-label="Start menu">
+      <h1>NEON SNAKE</h1>
+      <p class="subtitle">Cyberpunk Arcade Edition</p>
+      <label for="difficulty">Difficulty</label>
+      <select id="difficulty">
+        <option value="chill">Chill - Slow, wrap around walls</option>
+        <option value="classic" selected>Classic - Standard rules</option>
+        <option value="insane">Insane - Fast, bonus food</option>
+      </select>
+      <div class="toggle-row">
+        <span class="hud-label">Sound</span>
+        <label class="toggle">
+          <input type="checkbox" id="muteToggle" checked aria-label="Mute sound">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="instructions">
+        <kbd>Up</kbd> <kbd>Down</kbd> <kbd>Left</kbd> <kbd>Right</kbd> or <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to move<br>
+        <kbd>Space</kbd> / <kbd>Esc</kbd> to pause &nbsp;|&nbsp; Swipe or D-pad on mobile
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="startBtn" autofocus>START</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Over -->
+  <div class="overlay hidden" id="gameOverMenu">
+    <div class="panel" role="dialog" aria-label="Game over">
+      <h2>GAME OVER</h2>
+      <div class="score-line">Score: <span id="goScore">0</span></div>
+      <div class="score-line">High Score: <span id="goBest">0</span></div>
+      <div class="score-line">Difficulty: <span id="goDiff">Classic</span></div>
+      <div class="btn-row">
+        <button class="btn" id="restartBtn">RESTART</button>
+        <button class="btn btn-sm" id="menuBtn">MENU</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   NEON SNAKE - Premium Cyberpunk Snake Game
+   Single-file HTML/CSS/JS, no external dependencies.
+   ================================================================ */
+
+// ===== CONSTANTS =====
+var GRID = 20; // cells per row/col
+var DIFFICULTY = {
+  chill:   { interval: 160, wallDeath: false, label: 'Chill' },
+  classic: { interval: 110, wallDeath: true,  label: 'Classic' },
+  insane:  { interval: 65,  wallDeath: true,  label: 'Insane' }
+};
+var DIR = { UP: [0,-1], DOWN: [0,1], LEFT: [-1,0], RIGHT: [1,0] };
+var OPPOSITE = { UP: 'DOWN', DOWN: 'UP', LEFT: 'RIGHT', RIGHT: 'LEFT' };
+
+// ===== AUDIO ENGINE (Web Audio API) =====
+function AudioEngine() {
+  this.ctx = null;
+  this.muted = true;
+}
+AudioEngine.prototype.init = function() {
+  if (!this.ctx) {
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+};
+AudioEngine.prototype.setMuted = function(val) { this.muted = val; };
+AudioEngine.prototype.isMuted = function() { return this.muted; };
+AudioEngine.prototype.play = function(type) {
+  var self = this;
+  if (self.muted || !self.ctx) return;
+  var now = self.ctx.currentTime;
+  var osc = self.ctx.createOscillator();
+  var gain = self.ctx.createGain();
+  osc.connect(gain);
+  gain.connect(self.ctx.destination);
+  gain.gain.setValueAtTime(0.08, now);
+  if (type === 'eat') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(520, now);
+    osc.frequency.exponentialRampToValueAtTime(1040, now + 0.08);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    osc.start(now); osc.stop(now + 0.15);
+  } else if (type === 'bonus') {
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(880, now);
+    osc.frequency.exponentialRampToValueAtTime(1760, now + 0.12);
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+    osc.start(now); osc.stop(now + 0.25);
+  } else if (type === 'die') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.exponentialRampToValueAtTime(60, now + 0.4);
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+    osc.start(now); osc.stop(now + 0.45);
+  } else if (type === 'move') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(180, now);
+    gain.gain.setValueAtTime(0.015, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+    osc.start(now); osc.stop(now + 0.04);
+  }
+};
+
+// ===== PARTICLE SYSTEM =====
+function Particles() {
+  this.particles = [];
+}
+Particles.prototype.emit = function(x, y, color, count) {
+  count = count || 12;
+  for (var i = 0; i < count; i++) {
+    var angle = Math.random() * Math.PI * 2;
+    var speed = 0.5 + Math.random() * 2.5;
+    this.particles.push({
+      x: x, y: y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 1,
+      decay: 0.02 + Math.random() * 0.03,
+      size: 1.5 + Math.random() * 2.5,
+      color: color
+    });
+  }
+};
+Particles.prototype.update = function() {
+  for (var i = this.particles.length - 1; i >= 0; i--) {
+    var p = this.particles[i];
+    p.x += p.vx; p.y += p.vy;
+    p.life -= p.decay;
+    if (p.life <= 0) this.particles.splice(i, 1);
+  }
+};
+Particles.prototype.draw = function(ctx) {
+  for (var i = 0; i < this.particles.length; i++) {
+    var p = this.particles[i];
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  ctx.shadowBlur = 0;
+};
+
+// ===== HELPER: roundRect polyfill =====
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+    if (typeof r === 'number') r = [r, r, r, r];
+    var tl = Math.min(r[0], Math.min(w / 2, h / 2));
+    var tr = Math.min(r[1], Math.min(w / 2, h / 2));
+    var br = Math.min(r[2], Math.min(w / 2, h / 2));
+    var bl = Math.min(r[3], Math.min(w / 2, h / 2));
+    this.moveTo(x + tl, y);
+    this.lineTo(x + w - tr, y);
+    this.quadraticCurveTo(x + w, y, x + w, y + tr);
+    this.lineTo(x + w, y + h - br);
+    this.quadraticCurveTo(x + w, y + h, x + w - br, y + h);
+    this.lineTo(x + bl, y + h);
+    this.quadraticCurveTo(x, y + h, x, y + h - bl);
+    this.lineTo(x, y + tl);
+    this.quadraticCurveTo(x, y, x + tl, y);
+    this.closePath();
+    return this;
+  };
+}
+
+// ===== GAME =====
+function SnakeGame() {
+  this.canvas = document.getElementById('gameCanvas');
+  this.ctx = this.canvas.getContext('2d');
+  this.audio = new AudioEngine();
+  this.particles = new Particles();
+  this.difficulty = 'classic';
+  this.state = 'menu'; // menu | playing | paused | over
+  this.snake = [];
+  this.direction = 'RIGHT';
+  this.nextDirection = 'RIGHT';
+  this.food = null;
+  this.bonusFood = null;
+  this.bonusTimer = 0;
+  this.score = 0;
+  this.highScore = 0;
+  this.cellSize = 20;
+  this.lastTick = 0;
+  this.gridOffset = { x: 0, y: 0 };
+  this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  this.animFrameId = null;
+
+  this.resize();
+  this.bindEvents();
+  this.renderLoop();
+}
+
+/* ---- Resize & Layout ---- */
+SnakeGame.prototype.resize = function() {
+  var app = document.getElementById('app');
+  var w = app.clientWidth;
+  var h = app.clientHeight;
+  var maxCellW = Math.floor((w - 20) / GRID);
+  var maxCellH = Math.floor((h - 20) / GRID);
+  this.cellSize = Math.min(maxCellW, maxCellH, 32);
+  var gridPx = this.cellSize * GRID;
+  this.canvas.width = gridPx;
+  this.canvas.height = gridPx;
+  this.canvas.style.width = gridPx + 'px';
+  this.canvas.style.height = gridPx + 'px';
+  this.gridOffset.x = (w - gridPx) / 2;
+  this.gridOffset.y = (h - gridPx) / 2;
+  this.canvas.style.position = 'absolute';
+  this.canvas.style.left = this.gridOffset.x + 'px';
+  this.canvas.style.top = this.gridOffset.y + 'px';
+};
+
+/* ---- Events ---- */
+SnakeGame.prototype.bindEvents = function() {
+  var self = this;
+  window.addEventListener('resize', function() { self.resize(); });
+  document.addEventListener('keydown', function(e) { self.onKey(e); });
+
+  // Swipe detection on canvas
+  var touchStart = null;
+  this.canvas.addEventListener('touchstart', function(e) {
+    if (e.touches.length === 1) {
+      touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+  }, { passive: true });
+  this.canvas.addEventListener('touchend', function(e) {
+    if (!touchStart) return;
+    var dx = e.changedTouches[0].clientX - touchStart.x;
+    var dy = e.changedTouches[0].clientY - touchStart.y;
+    var absDx = Math.abs(dx), absDy = Math.abs(dy);
+    if (Math.max(absDx, absDy) < 20) return;
+    if (absDx > absDy) {
+      self.queueDir(dx > 0 ? 'RIGHT' : 'LEFT');
+    } else {
+      self.queueDir(dy > 0 ? 'DOWN' : 'UP');
+    }
+    touchStart = null;
+  }, { passive: true });
+
+  // D-pad buttons
+  var dpadMap = {
+    'dpad-up': 'UP', 'dpad-down': 'DOWN',
+    'dpad-left': 'LEFT', 'dpad-right': 'RIGHT'
+  };
+  var dpadKeys = Object.keys(dpadMap);
+  for (var i = 0; i < dpadKeys.length; i++) {
+    (function(id, dir) {
+      var el = document.getElementById(id);
+      var handler = function(e) {
+        e.preventDefault();
+        self.audio.init();
+        self.queueDir(dir);
+      };
+      el.addEventListener('touchstart', handler, { passive: false });
+      el.addEventListener('mousedown', handler);
+    })(dpadKeys[i], dpadMap[dpadKeys[i]]);
+  }
+
+  // UI buttons
+  document.getElementById('startBtn').addEventListener('click', function() { self.start(); });
+  document.getElementById('restartBtn').addEventListener('click', function() { self.start(); });
+  document.getElementById('menuBtn').addEventListener('click', function() { self.showMenu(); });
+  document.getElementById('hudPause').addEventListener('click', function() { self.togglePause(); });
+  document.getElementById('hudMute').addEventListener('click', function() { self.toggleMute(); });
+  document.getElementById('muteToggle').addEventListener('change', function(e) {
+    self.audio.setMuted(e.target.checked);
+    self.updateMuteUI();
+  });
+};
+
+SnakeGame.prototype.onKey = function(e) {
+  this.audio.init();
+  var key = e.key;
+  if (key === 'Escape' || key === ' ') {
+    e.preventDefault();
+    if (this.state === 'playing' || this.state === 'paused') this.togglePause();
+    return;
+  }
+  if (this.state !== 'playing') return;
+  var dir = null;
+  if (key === 'ArrowUp' || key === 'w' || key === 'W') dir = 'UP';
+  else if (key === 'ArrowDown' || key === 's' || key === 'S') dir = 'DOWN';
+  else if (key === 'ArrowLeft' || key === 'a' || key === 'A') dir = 'LEFT';
+  else if (key === 'ArrowRight' || key === 'd' || key === 'D') dir = 'RIGHT';
+  if (dir) { e.preventDefault(); this.queueDir(dir); }
+};
+
+SnakeGame.prototype.queueDir = function(dir) {
+  if (dir === OPPOSITE[this.direction]) return;
+  this.nextDirection = dir;
+};
+
+/* ---- Game State ---- */
+SnakeGame.prototype.start = function() {
+  this.difficulty = document.getElementById('difficulty').value;
+  this.audio.setMuted(document.getElementById('muteToggle').checked);
+  this.updateMuteUI();
+  this.audio.init();
+  var cfg = DIFFICULTY[this.difficulty];
+  this.interval = cfg.interval;
+  this.wallDeath = cfg.wallDeath;
+  this.highScore = parseInt(localStorage.getItem('snake_hs_' + this.difficulty) || '0');
+  this.resetGame();
+  this.state = 'playing';
+  this.lastTick = performance.now();
+  this.showOverlay(null);
+  document.getElementById('hud').classList.remove('hidden');
+  this.updateHUD();
+};
+
+SnakeGame.prototype.resetGame = function() {
+  var mid = Math.floor(GRID / 2);
+  this.snake = [
+    { x: mid, y: mid },
+    { x: mid - 1, y: mid },
+    { x: mid - 2, y: mid }
+  ];
+  this.direction = 'RIGHT';
+  this.nextDirection = 'RIGHT';
+  this.score = 0;
+  this.food = this.spawnFood();
+  this.bonusFood = null;
+  this.bonusTimer = 0;
+  this.particles = new Particles();
+};
+
+SnakeGame.prototype.togglePause = function() {
+  if (this.state === 'playing') {
+    this.state = 'paused';
+    document.getElementById('pauseIndicator').classList.add('visible');
+  } else if (this.state === 'paused') {
+    this.state = 'playing';
+    this.lastTick = performance.now();
+    document.getElementById('pauseIndicator').classList.remove('visible');
+  }
+};
+
+SnakeGame.prototype.showMenu = function() {
+  this.state = 'menu';
+  this.showOverlay('startMenu');
+  document.getElementById('hud').classList.add('hidden');
+  document.getElementById('pauseIndicator').classList.remove('visible');
+};
+
+SnakeGame.prototype.gameOver = function() {
+  this.state = 'over';
+  this.audio.play('die');
+  if (this.score > this.highScore) {
+    this.highScore = this.score;
+    localStorage.setItem('snake_hs_' + this.difficulty, this.highScore);
+  }
+  document.getElementById('goScore').textContent = this.score;
+  document.getElementById('goBest').textContent = this.highScore;
+  document.getElementById('goDiff').textContent = DIFFICULTY[this.difficulty].label;
+  this.showOverlay('gameOverMenu');
+};
+
+SnakeGame.prototype.showOverlay = function(id) {
+  var overlays = ['startMenu', 'gameOverMenu'];
+  for (var i = 0; i < overlays.length; i++) {
+    var oid = overlays[i];
+    var el = document.getElementById(oid);
+    if (oid === id) {
+      el.classList.remove('hidden');
+    } else {
+      el.classList.add('hidden');
+    }
+  }
+};
+
+SnakeGame.prototype.updateMuteUI = function() {
+  var muted = this.audio.isMuted();
+  document.getElementById('hudMute').textContent = muted ? '\uD83D\uDD07' : '\uD83D\uDD0A';
+};
+
+SnakeGame.prototype.updateHUD = function() {
+  document.getElementById('hudScore').textContent = this.score;
+  document.getElementById('hudBest').textContent = this.highScore;
+};
+
+/* ---- Food Spawning ---- */
+SnakeGame.prototype.spawnFood = function() {
+  var occupied = {};
+  for (var i = 0; i < this.snake.length; i++) {
+    occupied[this.snake[i].x + ',' + this.snake[i].y] = true;
+  }
+  var pos;
+  do {
+    pos = { x: Math.floor(Math.random() * GRID), y: Math.floor(Math.random() * GRID) };
+  } while (occupied[pos.x + ',' + pos.y]);
+  return pos;
+};
+
+SnakeGame.prototype.spawnBonus = function() {
+  var occupied = {};
+  for (var i = 0; i < this.snake.length; i++) {
+    occupied[this.snake[i].x + ',' + this.snake[i].y] = true;
+  }
+  if (this.food) occupied[this.food.x + ',' + this.food.y] = true;
+  var pos;
+  do {
+    pos = { x: Math.floor(Math.random() * GRID), y: Math.floor(Math.random() * GRID) };
+  } while (occupied[pos.x + ',' + pos.y]);
+  this.bonusFood = pos;
+  this.bonusTimer = 150;
+};
+
+/* ---- Game Tick ---- */
+SnakeGame.prototype.tick = function() {
+  this.direction = this.nextDirection;
+  var head = { x: this.snake[0].x, y: this.snake[0].y };
+  head.x += DIR[this.direction][0];
+  head.y += DIR[this.direction][1];
+
+  // Wall handling
+  if (this.wallDeath) {
+    if (head.x < 0 || head.x >= GRID || head.y < 0 || head.y >= GRID) {
+      this.gameOver(); return;
+    }
+  } else {
+    head.x = (head.x + GRID) % GRID;
+    head.y = (head.y + GRID) % GRID;
+  }
+
+  // Self collision
+  for (var i = 0; i < this.snake.length; i++) {
+    if (this.snake[i].x === head.x && this.snake[i].y === head.y) {
+      this.gameOver(); return;
+    }
+  }
+
+  this.snake.unshift(head);
+
+  var ate = false;
+  // Normal food check
+  if (head.x === this.food.x && head.y === this.food.y) {
+    this.score += 10;
+    ate = true;
+    this.audio.play('eat');
+    this.particles.emit(
+      head.x * this.cellSize + this.cellSize / 2,
+      head.y * this.cellSize + this.cellSize / 2,
+      '#00ff88', 14
+    );
+    this.food = this.spawnFood();
+    if (this.difficulty === 'insane' && !this.bonusFood && Math.random() < 0.25) {
+      this.spawnBonus();
+    }
+  } else if (this.bonusFood && head.x === this.bonusFood.x && head.y === this.bonusFood.y) {
+    this.score += 50;
+    ate = true;
+    this.audio.play('bonus');
+    this.particles.emit(
+      head.x * this.cellSize + this.cellSize / 2,
+      head.y * this.cellSize + this.cellSize / 2,
+      '#ffe600', 20
+    );
+    this.bonusFood = null;
+    this.bonusTimer = 0;
+  }
+
+  if (!ate) this.snake.pop();
+  else this.updateHUD();
+
+  // Bonus timer
+  if (this.bonusFood) {
+    this.bonusTimer--;
+    if (this.bonusTimer <= 0) this.bonusFood = null;
+  }
+};
+
+/* ---- Rendering ---- */
+SnakeGame.prototype.renderLoop = function() {
+  var self = this;
+  var loop = function(now) {
+    if (self.state === 'playing') {
+      if (now - self.lastTick >= self.interval) {
+        self.tick();
+        self.lastTick = now;
+      }
+    }
+    self.draw(now);
+    self.particles.update();
+    self.animFrameId = requestAnimationFrame(loop);
+  };
+  this.animFrameId = requestAnimationFrame(loop);
+};
+
+SnakeGame.prototype.draw = function(now) {
+  var ctx = this.ctx;
+  var cs = this.cellSize;
+  var w = this.canvas.width;
+  var h = this.canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  // Background
+  ctx.fillStyle = '#0a0a0f';
+  ctx.fillRect(0, 0, w, h);
+
+  // Animated grid
+  this.drawGrid(ctx, now);
+
+  // Border glow
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.25)';
+  ctx.lineWidth = 2;
+  ctx.shadowColor = '#00f0ff';
+  ctx.shadowBlur = 12;
+  ctx.strokeRect(1, 1, w - 2, h - 2);
+  ctx.shadowBlur = 0;
+
+  if (this.state === 'menu') return;
+
+  // Food
+  if (this.food) this.drawFood(ctx, this.food, '#00ff88', now, false);
+
+  // Bonus food
+  if (this.bonusFood) this.drawFood(ctx, this.bonusFood, '#ffe600', now, true);
+
+  // Snake
+  this.drawSnake(ctx, now);
+
+  // Particles
+  this.particles.draw(ctx);
+};
+
+SnakeGame.prototype.drawGrid = function(ctx, now) {
+  var cs = this.cellSize;
+  var pulse = this.reducedMotion ? 0 : Math.sin(now / 2000) * 0.03 + 0.06;
+  ctx.strokeStyle = 'rgba(0, 240, 255, ' + pulse + ')';
+  ctx.lineWidth = 0.5;
+  for (var i = 1; i < GRID; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i * cs, 0);
+    ctx.lineTo(i * cs, GRID * cs);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, i * cs);
+    ctx.lineTo(GRID * cs, i * cs);
+    ctx.stroke();
+  }
+};
+
+SnakeGame.prototype.drawSnake = function(ctx, now) {
+  var cs = this.cellSize;
+  for (var i = this.snake.length - 1; i >= 0; i--) {
+    var s = this.snake[i];
+    var t = i / this.snake.length;
+    var x = s.x * cs;
+    var y = s.y * cs;
+    var pad = 1;
+
+    // Gradient from cyan (head) to magenta (tail)
+    var r = Math.round(0 + t * 255);
+    var g = Math.round(240 - t * 240);
+    var b = Math.round(255 - t * 85);
+    var color = 'rgb(' + r + ',' + g + ',' + b + ')';
+
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = i === 0 ? 10 : 5;
+
+    var radius = cs * 0.25;
+    ctx.beginPath();
+    ctx.roundRect(x + pad, y + pad, cs - pad * 2, cs - pad * 2, radius);
+    ctx.fill();
+
+    // Head eyes
+    if (i === 0) {
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#0a0a0f';
+      var eyeSize = cs * 0.15;
+      var eyeOff = cs * 0.25;
+      var cx = x + cs / 2;
+      var cy = y + cs / 2;
+      var ex1, ey1, ex2, ey2;
+      if (this.direction === 'RIGHT') {
+        ex1 = cx + eyeOff * 0.5; ey1 = cy - eyeOff;
+        ex2 = cx + eyeOff * 0.5; ey2 = cy + eyeOff;
+      } else if (this.direction === 'LEFT') {
+        ex1 = cx - eyeOff * 0.5; ey1 = cy - eyeOff;
+        ex2 = cx - eyeOff * 0.5; ey2 = cy + eyeOff;
+      } else if (this.direction === 'UP') {
+        ex1 = cx - eyeOff; ey1 = cy - eyeOff * 0.5;
+        ex2 = cx + eyeOff; ey2 = cy - eyeOff * 0.5;
+      } else {
+        ex1 = cx - eyeOff; ey1 = cy + eyeOff * 0.5;
+        ex2 = cx + eyeOff; ey2 = cy + eyeOff * 0.5;
+      }
+      ctx.beginPath(); ctx.arc(ex1, ey1, eyeSize, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(ex2, ey2, eyeSize, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  ctx.shadowBlur = 0;
+};
+
+SnakeGame.prototype.drawFood = function(ctx, pos, color, now, isBonus) {
+  var cs = this.cellSize;
+  var x = pos.x * cs + cs / 2;
+  var y = pos.y * cs + cs / 2;
+  var pulse = this.reducedMotion ? 1 : 0.8 + Math.sin(now / 200) * 0.2;
+  var radius = cs * 0.35 * pulse;
+
+  ctx.fillStyle = color;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 12;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Inner glow
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.shadowBlur = 0;
+  ctx.beginPath();
+  ctx.arc(x, y, radius * 0.4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Bonus star shape
+  if (isBonus) {
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 8;
+    var spikes = 5;
+    var outerR = cs * 0.45 * pulse;
+    var innerR = cs * 0.2 * pulse;
+    ctx.beginPath();
+    for (var i = 0; i < spikes * 2; i++) {
+      var r = i % 2 === 0 ? outerR : innerR;
+      var angle = (i * Math.PI / spikes) - Math.PI / 2 + now / 1000;
+      var px = x + Math.cos(angle) * r;
+      var py = y + Math.sin(angle) * r;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+};
+
+// ===== INIT =====
+var game = new SnakeGame();
+</script>
+</body>
+</html>

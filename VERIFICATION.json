@@ -1,0 +1,82 @@
+{
+  "prompt": "Build a premium single-file Snake game using HTML, CSS, and vanilla JavaScript.\n\nDeliver exactly one complete HTML document with embedded CSS and JS. Do not use external assets, frameworks, libraries, or network requests.\n\nGame features:\n1. Responsive canvas-based Snake game that scales cleanly on desktop and mobile.\n2. Keyboard controls: Arrow keys and WASD.\n3. Mobile controls: swipe gestures plus visible touch D-pad.\n4. Start menu with title, difficulty selector, instructions, mute toggle, and start button.\n5. Pause/resume with Escape or Space.\n6. Game-over overlay showing score, high score, difficulty, and restart button.\n7. High score persisted in localStorage separately per difficulty.\n8. Difficulty levels:\n   - Chill: slower speed, no wall death; snake wraps around edges.\n   - Classic: medium speed, wall collision ends game.\n   - Insane: fast speed, wall collision, occasional bonus food.\n9. Food must never spawn on the snake.\n10. Prevent immediate 180-degree reversal.\n11. Use requestAnimationFrame with fixed-step timing so the game speed is stable.\n12. Include particle effects when food is eaten.\n13. Include animated neon grid background and glowing snake/food visuals.\n14. Include subtle sound effects generated with the Web Audio API, no audio files.\n15. Include mute/unmute.\n16. Include accessibility basics: readable contrast, buttons with labels, focus states, and reduced-motion support.\n17. Keep the code organized into clear functions/classes with comments.\n\nVisual style:\nCreate a beautiful futuristic cyberpunk arcade look: dark background, neon gradients, glassmorphism UI panels, glowing canvas border, animated title, smooth transitions, and polished typography using system fonts only.\n\nOutput rules:\nsave it at ./outputs/<MODEL-FILENAME>.html\nNo explanations.\nNo markdown fences.",
+  "files": [
+    {
+      "file": "gemma4-12b.html",
+      "bytes": 17678,
+      "script_found": true,
+      "node_check_exit": 0,
+      "node_check_output": ""
+    },
+    {
+      "file": "glm52.html",
+      "bytes": 41752,
+      "script_found": true,
+      "node_check_exit": 0,
+      "node_check_output": ""
+    },
+    {
+      "file": "qwen36-27b-rocm.html",
+      "bytes": 24608,
+      "script_found": true,
+      "node_check_exit": 0,
+      "node_check_output": ""
+    },
+    {
+      "file": "qwen36-27b-rpc.html",
+      "bytes": 29261,
+      "script_found": true,
+      "node_check_exit": 0,
+      "node_check_output": ""
+    },
+    {
+      "file": "qwen36-35b-a3b.html",
+      "bytes": 35436,
+      "script_found": true,
+      "node_check_exit": 0,
+      "node_check_output": ""
+    }
+  ],
+  "model_metadata": {
+    "gemma4-12b.html": {
+      "label": "Gemma 4 12B",
+      "model": "Gemma 4 12B IT",
+      "quant": "QAT Unsloth UD Q4_K_XL",
+      "compute_backend": "CUDA SM120",
+      "runtime": "llama.cpp",
+      "note": "local QAT quantized run"
+    },
+    "glm52.html": {
+      "label": "GLM 5.2",
+      "model": "GLM 5.2",
+      "quant": "cloud model",
+      "compute_backend": "cloud",
+      "runtime": "OpenRouter",
+      "note": "cloud model, not a local quant"
+    },
+    "qwen36-27b-rocm.html": {
+      "label": "Qwen3.6 27B",
+      "model": "Qwen3.6 27B",
+      "quant": "Q4_K_M",
+      "compute_backend": "ROCm",
+      "runtime": "llama.cpp",
+      "note": "local quantized run"
+    },
+    "qwen36-27b-rpc.html": {
+      "label": "Qwen3.6 27B",
+      "model": "Qwen3.6 27B",
+      "quant": "Q6_K",
+      "compute_backend": "local GPU offload",
+      "runtime": "llama.cpp",
+      "note": "local quantized run"
+    },
+    "qwen36-35b-a3b.html": {
+      "label": "Qwen3.6 35B A3B",
+      "model": "Qwen3.6 35B A3B",
+      "quant": "INT4",
+      "compute_backend": "OpenVINO",
+      "runtime": "OpenVINO Model Server / OVMS",
+      "note": "local OpenVINO run"
+    }
+  }
+}
