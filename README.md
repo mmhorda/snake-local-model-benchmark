@@ -19,7 +19,8 @@ Or clone/download the repo and open any generated HTML file directly in a browse
 | `gemma4-12b.html` | Gemma 4 12B IT | QAT Unsloth UD Q4_K_XL | CUDA SM120 | llama.cpp | local quantized run |
 | `glm52.html` | GLM 5.2 | cloud model | cloud | OpenRouter | cloud model, not a local quant |
 | `qwen36-27b-rocm.html` | Qwen3.6 27B | Q4_K_M | ROCm | llama.cpp | local quantized run |
-| `qwen36-27b-rpc.html` | Qwen3.6 27B | Q6_K | local GPU offload | llama.cpp | local quantized run |
+| `qwen36-27b-rpc.html` | Qwen3.6 27B | Q6_K | ROCm via RPC (2x GPU) | llama.cpp | local quantized run with ROCm RPC offload across 2 GPUs |
+| `qwen36-27b-vulkan.html` | Qwen3.6 27B | Q6_K | Vulkan/RADV | llama.cpp | local quantized run |
 | `qwen36-35b-a3b.html` | Qwen3.6 35B A3B | INT4 | OpenVINO | OpenVINO Model Server / OVMS | local OpenVINO run |
 
 For `glm52.html`, the result came from the cloud model GLM 5.2 via OpenRouter. It was not a local quantized model.
@@ -66,7 +67,7 @@ No markdown fences.
 
 ## Publish-time verification
 
-I did not alter the model-generated HTML files for gameplay fixes. I only added this README, `PROMPT.md`, `VERIFICATION.json`, `.nojekyll`, and a landing `index.html` for sharing.
+I did not alter the model-generated HTML files for gameplay fixes. Repo support files are limited to this README, `PROMPT.md`, `VERIFICATION.json`, `.nojekyll`, and the landing `index.html` for sharing.
 
 Syntax check results:
 
@@ -76,6 +77,7 @@ Syntax check results:
 | `glm52.html` | 41752 | yes | 0 |
 | `qwen36-27b-rocm.html` | 24608 | yes | 0 |
 | `qwen36-27b-rpc.html` | 29261 | yes | 0 |
+| `qwen36-27b-vulkan.html` | 29084 | yes | 0 |
 | `qwen36-35b-a3b.html` | 35436 | yes | 0 |
 
 ## Notes

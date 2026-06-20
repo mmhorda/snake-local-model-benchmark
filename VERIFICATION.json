@@ -30,6 +30,13 @@
       "node_check_output": ""
     },
     {
+      "file": "qwen36-27b-vulkan.html",
+      "bytes": 29084,
+      "script_found": true,
+      "node_check_exit": 0,
+      "node_check_output": ""
+    },
+    {
       "file": "qwen36-35b-a3b.html",
       "bytes": 35436,
       "script_found": true,
@@ -66,9 +73,9 @@
       "label": "Qwen3.6 27B",
       "model": "Qwen3.6 27B",
       "quant": "Q6_K",
-      "compute_backend": "local GPU offload",
+      "compute_backend": "ROCm via RPC (2x GPU)",
       "runtime": "llama.cpp",
-      "note": "local quantized run"
+      "note": "local quantized run with ROCm RPC offload across 2 GPUs"
     },
     "qwen36-35b-a3b.html": {
       "label": "Qwen3.6 35B A3B",
@@ -77,6 +84,14 @@
       "compute_backend": "OpenVINO",
       "runtime": "OpenVINO Model Server / OVMS",
       "note": "local OpenVINO run"
+    },
+    "qwen36-27b-vulkan.html": {
+      "label": "Qwen3.6 27B",
+      "model": "Qwen3.6 27B",
+      "quant": "Q6_K",
+      "compute_backend": "Vulkan/RADV",
+      "runtime": "llama.cpp",
+      "note": "local quantized run on Vulkan/RADV"
     }
   }
 }
