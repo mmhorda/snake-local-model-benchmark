@@ -16,14 +16,29 @@ Or clone/download the repo and open any generated HTML file directly in a browse
 
 | File | Model | Quant / variant | Compute backend | Runtime | Notes |
 |---|---|---|---|---|---|
-| `gemma4-12b.html` | Gemma 4 12B IT | QAT Unsloth UD Q4_K_XL | CUDA SM120 | llama.cpp | local quantized run |
+| `gemma4-12b.html` | Gemma 4 12B IT | QAT Unsloth UD Q4_K_XL | CUDA SM120 | llama.cpp | local QAT quantized run |
 | `glm52.html` | GLM 5.2 | cloud model | cloud | OpenRouter | cloud model, not a local quant |
 | `qwen36-27b-rocm.html` | Qwen3.6 27B | Q4_K_M | ROCm | llama.cpp | local quantized run |
 | `qwen36-27b-rpc.html` | Qwen3.6 27B | Q6_K | ROCm via RPC (2x GPU) | llama.cpp | local quantized run with ROCm RPC offload across 2 GPUs |
-| `qwen36-27b-vulkan.html` | Qwen3.6 27B | Q6_K | Vulkan/RADV | llama.cpp | local quantized run |
+| `qwen36-27b-vulkan.html` | Qwen3.6 27B | Q6_K | Vulkan/RADV | llama.cpp | local quantized run on Vulkan/RADV |
+| `qwen36-27b-q8-rpc.html` | Qwen3.6 27B | Q8 | RPC | llama.cpp | local Q8 RPC run |
 | `qwen36-35b-a3b.html` | Qwen3.6 35B A3B | INT4 | OpenVINO | OpenVINO Model Server / OVMS | local OpenVINO run |
 
 For `glm52.html`, the result came from the cloud model GLM 5.2 via OpenRouter. It was not a local quantized model.
+
+## Current normalized rating
+
+Rating scale: 10 = strongest overall generated artifact; ratings combine feature completeness, architecture, runtime correctness, visual polish, accessibility, and known gameplay edge cases. These are comparative ratings for the generated code, not claims that the games are bug-free.
+
+| Rank | File | Rating | Summary |
+|---:|---|---:|---|
+| 1 | `qwen36-27b-vulkan.html` | 9.2/10 | Best local/Qwen build: strong feature coverage, polished visuals, stable fixed-step loop. |
+| 2 | `glm52.html` | 9.0/10 | Best architecture/class structure from the original set; very complete, minor edge-case bugs. |
+| 3 | `qwen36-27b-rocm.html` | 8.8/10 | Clean class-based local build; solid feature coverage, less polished than the top two. |
+| 4 | `qwen36-27b-q8-rpc.html` | 8.5/10 | Very complete Q8 RPC build with strong cyberpunk polish; loses points for no classes, tail-collision/full-board edge cases, and weaker accessibility hiding of inactive overlays. |
+| 5 | `qwen36-35b-a3b.html` | 8.1/10 | Ambitious and visually rich, but known audio/swipe/grid bugs hurt reliability. |
+| 6 | `qwen36-27b-rpc.html` | 7.6/10 | Good UI and broad features, but older/prototype style and weaker timing/edge-case handling. |
+| 7 | `gemma4-12b.html` | 6.0/10 | Compact and playable prototype, but least complete and has the most concerning loop/pause issues. |
 
 ## Exact prompt used
 
@@ -78,6 +93,7 @@ Syntax check results:
 | `qwen36-27b-rocm.html` | 24608 | yes | 0 |
 | `qwen36-27b-rpc.html` | 29261 | yes | 0 |
 | `qwen36-27b-vulkan.html` | 29084 | yes | 0 |
+| `qwen36-27b-q8-rpc.html` | 27554 | yes | 0 |
 | `qwen36-35b-a3b.html` | 35436 | yes | 0 |
 
 ## Notes

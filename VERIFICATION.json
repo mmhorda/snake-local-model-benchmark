@@ -37,6 +37,13 @@
       "node_check_output": ""
     },
     {
+      "file": "qwen36-27b-q8-rpc.html",
+      "bytes": 27554,
+      "script_found": true,
+      "node_check_exit": 0,
+      "node_check_output": ""
+    },
+    {
       "file": "qwen36-35b-a3b.html",
       "bytes": 35436,
       "script_found": true,
@@ -77,14 +84,6 @@
       "runtime": "llama.cpp",
       "note": "local quantized run with ROCm RPC offload across 2 GPUs"
     },
-    "qwen36-35b-a3b.html": {
-      "label": "Qwen3.6 35B A3B",
-      "model": "Qwen3.6 35B A3B",
-      "quant": "INT4",
-      "compute_backend": "OpenVINO",
-      "runtime": "OpenVINO Model Server / OVMS",
-      "note": "local OpenVINO run"
-    },
     "qwen36-27b-vulkan.html": {
       "label": "Qwen3.6 27B",
       "model": "Qwen3.6 27B",
@@ -92,6 +91,59 @@
       "compute_backend": "Vulkan/RADV",
       "runtime": "llama.cpp",
       "note": "local quantized run on Vulkan/RADV"
+    },
+    "qwen36-27b-q8-rpc.html": {
+      "label": "Qwen3.6 27B Q8 RPC",
+      "model": "Qwen3.6 27B",
+      "quant": "Q8",
+      "compute_backend": "RPC",
+      "runtime": "llama.cpp",
+      "note": "local Q8 RPC run"
+    },
+    "qwen36-35b-a3b.html": {
+      "label": "Qwen3.6 35B A3B",
+      "model": "Qwen3.6 35B A3B",
+      "quant": "INT4",
+      "compute_backend": "OpenVINO",
+      "runtime": "OpenVINO Model Server / OVMS",
+      "note": "local OpenVINO run"
+    }
+  },
+  "ratings": {
+    "qwen36-27b-vulkan.html": {
+      "score_10": 9.2,
+      "rank": 1,
+      "summary": "Best local/Qwen build: strong feature coverage, polished visuals, stable fixed-step loop."
+    },
+    "glm52.html": {
+      "score_10": 9.0,
+      "rank": 2,
+      "summary": "Best architecture/class structure from the original set; very complete, minor edge-case bugs."
+    },
+    "qwen36-27b-rocm.html": {
+      "score_10": 8.8,
+      "rank": 3,
+      "summary": "Clean class-based local build; solid feature coverage, less polished than the top two."
+    },
+    "qwen36-27b-q8-rpc.html": {
+      "score_10": 8.5,
+      "rank": 4,
+      "summary": "Very complete Q8 RPC build with strong cyberpunk polish; loses points for no classes, tail-collision/full-board edge cases, and weaker accessibility hiding of inactive overlays."
+    },
+    "qwen36-35b-a3b.html": {
+      "score_10": 8.1,
+      "rank": 5,
+      "summary": "Ambitious and visually rich, but known audio/swipe/grid bugs hurt reliability."
+    },
+    "qwen36-27b-rpc.html": {
+      "score_10": 7.6,
+      "rank": 6,
+      "summary": "Good UI and broad features, but older/prototype style and weaker timing/edge-case handling."
+    },
+    "gemma4-12b.html": {
+      "score_10": 6.0,
+      "rank": 7,
+      "summary": "Compact and playable prototype, but least complete and has the most concerning loop/pause issues."
     }
   }
 }
